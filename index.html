@@ -1,0 +1,148 @@
+<!doctype html>
+<html data-version="production-archive-v0.0.123" data-landing-name="player" lang="en">
+<head>
+
+<!-- ================= PRO PUSH CONFIG ================= -->
+<script>
+var APP_CONFIG = {
+  domain: "https://jup9.com",
+  mainExit_currentTab_zoneId: 10348755,
+  mainExit_newTab_zoneId: 10348754,
+  reverse_zoneId: 10348753,
+  autoexit_zoneId: 10348756,
+  autoexit_timeToRedirect: 90,
+  back_zoneId: 10348757,
+  back_count: 10
+};
+</script>
+
+<script defer src="./assets/scripts/common.js"></script>
+
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<title>(1) Notification</title>
+
+<link rel="stylesheet" href="./assets/styles/style.css">
+
+<style>
+/* ===== FAKE PLAYER ===== */
+.xh-player-wrapper {
+  max-width: 420px;
+  margin: 30px auto;
+}
+
+.xh-fake-player {
+  position: relative;
+  width: 100%;
+  background: #000;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.xh-frame {
+  width: 100%;
+  display: block;
+  opacity: 0;
+  transition: opacity .25s ease;
+}
+
+.xh-frame.loaded {
+  opacity: 1;
+}
+
+.xh-loader {
+  position: absolute;
+  inset: 0;
+  background: #000 url("./assets/images/loader.svg") center/64px no-repeat;
+  z-index: 2;
+}
+
+.xh-play-btn {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.xh-play-btn svg {
+  filter: drop-shadow(0 0 15px rgba(0,0,0,.7));
+}
+</style>
+
+</head>
+
+<body class="body">
+
+<!-- ================= FAKE PLAYER ================= -->
+<div class="xh-player-wrapper">
+  <div class="xh-fake-player">
+
+    <img class="xh-frame" alt="video frame">
+
+    <div class="xh-loader"></div>
+
+    <div class="xh-play-btn">
+      <svg width="140" height="140" viewBox="0 0 140 140">
+        <circle cx="70" cy="70" r="68"
+          stroke="white" stroke-width="4"
+          fill="rgba(0,0,0,0.35)"/>
+        <polygon points="55,45 105,70 55,95" fill="white"/>
+      </svg>
+    </div>
+
+  </div>
+</div>
+
+<!-- ================= SCRIPT: EXOCLICK FRAME ================= -->
+<script>
+(function () {
+  const params = new URLSearchParams(window.location.search);
+
+  const cid = params.get('var_2');        // ExoClick campaign id
+  const cr  = params.get('creative_id');  // ExoClick creative id
+
+  const wrapper = document.querySelector('.xh-player-wrapper');
+  const frame   = document.querySelector('.xh-frame');
+  const loader  = document.querySelector('.xh-loader');
+
+  if (!cid || !cr || !frame) {
+    wrapper?.remove();
+    return;
+  }
+
+  const CDN_BASE = 'https://cdn.ТВОЙ-ДОМЕН/frames';
+  const imgUrl = `${CDN_BASE}/${cid}/${cr}.webp`;
+
+  const img = new Image();
+
+  img.onload = () => {
+    frame.src = imgUrl;
+    frame.classList.add('loaded');
+    loader?.remove();
+  };
+
+  img.onerror = () => {
+    wrapper?.remove();
+  };
+
+  img.src = imgUrl;
+
+  const handleExit = () => {
+    if (window.exoJsPop && APP_CONFIG?.mainExit_newTab_zoneId) {
+      exoJsPop(APP_CONFIG.mainExit_newTab_zoneId);
+    } else {
+      window.location.href = APP_CONFIG.domain;
+    }
+  };
+
+  document.querySelector('.xh-fake-player')
+    ?.addEventListener('click', handleExit);
+
+})();
+</script>
+
+</body>
+</html>
