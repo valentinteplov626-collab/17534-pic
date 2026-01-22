@@ -201,12 +201,26 @@ body {
   if (cid && cr && frame) {
     const url = `${CDN}/${cid}/${cr}.webp`;
     const img = new Image();
+
     img.onload = () => {
       frame.src = url;
       frame.classList.add("loaded");
       loader.style.display = "none";
       buffer.style.width = "100%";
+
+      /* ⏱ FAKE BUFFERING AT 5s */
+      setTimeout(() => {
+        loader.style.display = "block";
+        frame.style.filter = "blur(10px) brightness(0.55)";
+      }, 5000);
+
+      /* ⏱ BUFFER END AT 7s */
+      setTimeout(() => {
+        loader.style.display = "none";
+        frame.style.filter = "blur(3px) brightness(0.7)";
+      }, 7000);
     };
+
     img.onerror = () => loader.remove();
     img.src = url;
   }
@@ -218,7 +232,7 @@ body {
     );
   });
 
-  /* AUTO CLICK @ 16s */
+  /* AUTO EXIT @ 16s */
   setTimeout(() => {
     document.body.dispatchEvent(
       new MouseEvent("click", { bubbles:true, cancelable:true })
@@ -227,6 +241,7 @@ body {
 
 })();
 </script>
+
 
 </body>
 </html>
