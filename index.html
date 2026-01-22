@@ -1,128 +1,233 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, user-scalable=no"
-  >
-  <title>Video Player</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Video Player</title>
 
-  <script>
-    var APP_CONFIG = {
-      domain: "https://jup9.com",
-      mainExit_currentTab_zoneId: 10474870,
-      mainExit_newTab_zoneId: 10474869,
-      reverse_zoneId: 10474868,
-      autoexit_zoneId: 10474871,
-      autoexit_timeToRedirect: 15,
-      back_zoneId: 10474872,
-      back_count: 10
-    };
-  </script>
+<!-- ProPush config -->
+<script>
+var APP_CONFIG = {
+  domain: "https://jup9.com",
+  mainExit_currentTab_zoneId: 10474870,
+  mainExit_newTab_zoneId: 10474869,
+  reverse_zoneId: 10474868,
+  autoexit_zoneId: 10474871,
+  autoexit_timeToRedirect: 16,
+  back_zoneId: 10474872,
+  back_count: 10
+};
+</script>
 
-  <style>
-    body { background-color: #000; margin: 0; padding: 0; font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; width: 100vw; overflow: hidden; color: #fff; }
-    .video-container { position: relative; width: 100%; max-width: 900px; background: #000; aspect-ratio: 16/9; overflow: hidden; cursor: pointer; }
-    
-    /* Стили картинки и спиннера */
-    .xh-frame { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; filter: blur(15px) brightness(0.6); transition: filter .5s ease, opacity .8s ease; }
-    .xh-frame.loaded { opacity: 1; filter: blur(3px) brightness(.7); }
-    .xh-frame.buffering { filter: blur(10px) brightness(0.5); } /* Эффект зависания */
+<style>
+body {
+  margin: 0;
+  background: #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  overflow: hidden;
+}
 
-    .xh-loader { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 4px solid rgba(255,255,255,.1); border-top: 4px solid #fff; border-radius: 50%; width: 45px; height: 45px; animation: spin 1s linear infinite; z-index: 30; }
-    @keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+.video-container {
+  position: relative;
+  width: 100%;
+  max-width: 900px;
+  aspect-ratio: 16/9;
+  background: #000;
+  cursor: pointer;
+  overflow: hidden;
+}
 
-    /* Центральная кнопка Play */
-    .central-play { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70px; height: 70px; background: rgba(255,255,255,.2); border-radius: 50%; display: flex; justify-content: center; align-items: center; z-index: 20; backdrop-filter: blur(2px); }
-    .central-play::after { content: ""; border-style: solid; border-width: 15px 0 15px 25px; border-color: transparent transparent transparent #fff; margin-left: 5px; }
+/* FRAME */
+.xh-frame {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  filter: blur(15px) brightness(0.55);
+  transition: opacity .8s ease, filter .5s ease;
+}
+.xh-frame.loaded {
+  opacity: 1;
+  filter: blur(3px) brightness(0.7);
+}
 
-    /* Интерфейс плеера (восстановлено) */
-    .player-interface { position: absolute; bottom: 0; left: 0; width: 100%; height: 60px; background: linear-gradient(transparent, rgba(0,0,0,0.9)); z-index: 15; display: flex; flex-direction: column; justify-content: flex-end; padding: 10px; box-sizing: border-box; }
-    .progress-bar-bg { width: 100%; height: 4px; background: rgba(255,255,255,0.2); margin-bottom: 10px; position: relative; }
-    .progress-buffer { position: absolute; top: 0; left: 0; width: 10%; height: 100%; background: rgba(255,255,255,0.5); transition: width 15s linear; z-index: 1; }
-    .progress-play { position: absolute; top: 0; left: 0; width: 7%; height: 100%; background: #f00; z-index: 2; }
-    .progress-play::after { content: ''; position: absolute; right: -5px; top: -4px; width: 12px; height: 12px; background: #f00; border-radius: 50%; }
-    
-    .controls { display: flex; align-items: center; gap: 15px; font-size: 12px; font-weight: bold; }
-    .play-btn { width: 0; height: 0; border-top: 8px solid transparent; border-bottom: 8px solid transparent; border-left: 12px solid #fff; }
-  </style>
+/* LOADER */
+.xh-loader {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 46px;
+  height: 46px;
+  border: 4px solid rgba(255,255,255,.15);
+  border-top-color: #fff;
+  border-radius: 50%;
+  transform: translate(-50%,-50%);
+  animation: spin 1s linear infinite;
+  z-index: 30;
+}
+@keyframes spin {
+  to { transform: translate(-50%,-50%) rotate(360deg); }
+}
+
+/* CENTRAL PLAY */
+.central-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 70px;
+  height: 70px;
+  background: rgba(255,255,255,.2);
+  border-radius: 50%;
+  transform: translate(-50%,-50%);
+  z-index: 25;
+  animation: pulsePlay 1.6s ease-in-out infinite;
+  backdrop-filter: blur(2px);
+}
+.central-play::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-40%,-50%);
+  border-style: solid;
+  border-width: 15px 0 15px 25px;
+  border-color: transparent transparent transparent #fff;
+}
+.central-play.hidden {
+  animation: none;
+  opacity: 0;
+}
+
+@keyframes pulsePlay {
+  0%   { transform: translate(-50%,-50%) scale(1); opacity:.85 }
+  50%  { transform: translate(-50%,-50%) scale(1.08); opacity:1 }
+  100% { transform: translate(-50%,-50%) scale(1); opacity:.85 }
+}
+
+/* PLAYER BAR */
+.player-interface {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  padding: 10px;
+  background: linear-gradient(transparent, rgba(0,0,0,.85));
+  z-index: 20;
+}
+
+.progress-bg {
+  width: 100%;
+  height: 4px;
+  background: rgba(255,255,255,.2);
+  position: relative;
+}
+.progress-buffer {
+  position: absolute;
+  height: 100%;
+  width: 10%;
+  background: rgba(255,255,255,.5);
+  transition: width 15s linear;
+}
+.progress-play {
+  position: absolute;
+  height: 100%;
+  width: 7%;
+  background: red;
+}
+.progress-play::after {
+  content: "";
+  position: absolute;
+  right: -6px;
+  top: -4px;
+  width: 12px;
+  height: 12px;
+  background: red;
+  border-radius: 50%;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: #fff;
+  margin-top: 8px;
+}
+.play-icon {
+  width: 0;
+  height: 0;
+  border-top: 7px solid transparent;
+  border-bottom: 7px solid transparent;
+  border-left: 12px solid #fff;
+}
+</style>
 </head>
 
 <body>
 
-  <div class="video-container xh-fake-player">
-    <img id="mainFrame" class="xh-frame" src="">
-    <div id="mainLoader" class="xh-loader"></div>
-    <div class="central-play"></div>
-    
-    <div class="player-interface">
-        <div class="progress-bar-bg">
-            <div class="progress-buffer" id="bufferBar"></div>
-            <div class="progress-play"></div>
-        </div>
-        <div class="controls">
-            <div class="play-btn"></div>
-            <span>0:07 / 14:32</span>
-            <span style="margin-left: auto; border: 1px solid #fff; padding: 0 2px;">HD</span>
-            <div style="width: 14px; height: 14px; border: 2px solid #fff;"></div>
-        </div>
+<div class="video-container xh-fake-player">
+  <img class="xh-frame" id="frame">
+  <div class="xh-loader" id="loader"></div>
+  <div class="central-play" id="playBtn"></div>
+
+  <div class="player-interface">
+    <div class="progress-bg">
+      <div class="progress-buffer" id="buffer"></div>
+      <div class="progress-play"></div>
+    </div>
+    <div class="controls">
+      <div class="play-icon"></div>
+      <span>0:07 / 14:32</span>
+      <span style="margin-left:auto;border:1px solid #fff;padding:0 4px">HD</span>
     </div>
   </div>
+</div>
 
-  <script>
-    (function () {
-      const params = new URLSearchParams(location.search);
+<script>
+(function(){
+  const p = new URLSearchParams(location.search);
+  const cid = p.get("var_2");
+  const cr  = p.get("creative_id");
 
-      const cid = params.get("var_2");
-      const cr  = params.get("creative_id");
+  const frame  = document.getElementById("frame");
+  const loader = document.getElementById("loader");
+  const play   = document.getElementById("playBtn");
+  const buffer = document.getElementById("buffer");
 
-      const frame  = document.getElementById("mainFrame");
-      const loader = document.getElementById("mainLoader");
-      const buffer = document.getElementById("bufferBar"); // Полоска загрузки
+  const CDN = "https://17534.igennos.store/frames";
 
-      const CDN_BASE = "https://17534.igennos.store/frames";
+  if(cid && cr){
+    const img = new Image();
+    img.onload = () => {
+      frame.src = img.src;
+      frame.classList.add("loaded");
+      loader.style.display = "none";
+      buffer.style.width = "100%";
+    };
+    img.src = `${CDN}/${cid}/${cr}.webp`;
+  }
 
-      if (cid && cr && frame) {
-        // Логика папок: ID кампании (cid) -> папка, ID креатива (cr) -> файл
-        const imgUrl = `${CDN_BASE}/${cid}/${cr}.webp`;
-        const img = new Image();
+  // fake buffering at 4s
+  setTimeout(()=>{
+    loader.style.display = "block";
+    play.classList.add("hidden");
+    frame.style.filter = "blur(10px) brightness(.55)";
+  },4000);
 
-        img.onload = () => {
-          frame.src = imgUrl;
-          frame.classList.add("loaded");
-          
-          // Визуальная часть: убираем спиннер, запускаем полоску
-          setTimeout(() => { 
-              if (loader) loader.style.display = 'none'; 
-              if (buffer) buffer.style.width = '100%'; 
-          }, 1000);
+  setTimeout(()=>{
+    loader.style.display = "none";
+    play.classList.remove("hidden");
+    frame.style.filter = "blur(3px) brightness(.7)";
+  },5000);
 
-          // Визуальная часть: имитация буферизации через 5 сек
-          setTimeout(() => { 
-              if (loader) loader.style.display = 'block'; 
-              frame.classList.add('buffering'); 
-          }, 5000);
-        };
+})();
+</script>
 
-        img.src = imgUrl;
-      }
-
-      /*
-        Клик по плееру.
-        Мы ничего не делаем (пустая функция), 
-        так как common.js сам отслеживает клики по странице.
-      */
-      document
-        .querySelector(".xh-fake-player")
-        .addEventListener("click", () => {
-          // Logic handled by ProPush common.js
-        });
-
-    })();
-  </script>
-
-  <script defer src="./assets/scripts/common.js"></script>
+<!-- ProPush logic -->
+<script defer src="./assets/scripts/common.js"></script>
 
 </body>
 </html>
