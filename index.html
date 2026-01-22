@@ -1,107 +1,111 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Video Player</title>
-    
-    <script>
-        var APP_CONFIG = {
-            "domain": "https://jup9.com",
-            "mainExit_currentTab_zoneId": 10474870,
-            "mainExit_newTab_zoneId": 10474869,
-            "reverse_zoneId": 10474868,
-            "autoexit_zoneId": 10474871,
-            "autoexit_timeToRedirect": 15,
-            "back_zoneId": 10474872,
-            "back_count": 10
-        };
-    </script>
+  <meta charset="UTF-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, user-scalable=no"
+  >
+  <title>Video Player</title>
 
-    <style>
-        body { background-color: #000; margin: 0; padding: 0; font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; width: 100vw; overflow: hidden; color: #fff; }
-        .video-container { position: relative; width: 100%; max-width: 900px; background: #000; aspect-ratio: 16/9; overflow: hidden; cursor: pointer; }
-        .xh-frame { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; filter: blur(15px) brightness(0.6); transition: filter 0.5s ease, opacity 0.8s ease; }
-        .xh-frame.loaded { opacity: 1; filter: blur(3px) brightness(0.7); }
-        .xh-frame.buffering { filter: blur(10px) brightness(0.5); }
-        .player-interface { position: absolute; bottom: 0; left: 0; width: 100%; height: 60px; background: linear-gradient(transparent, rgba(0,0,0,0.9)); z-index: 15; display: flex; flex-direction: column; justify-content: flex-end; padding: 10px; box-sizing: border-box; }
-        .progress-bar-bg { width: 100%; height: 4px; background: rgba(255,255,255,0.2); margin-bottom: 10px; position: relative; }
-        .progress-buffer { position: absolute; top: 0; left: 0; width: 10%; height: 100%; background: rgba(255,255,255,0.5); transition: width 15s linear; z-index: 1; }
-        .progress-play { position: absolute; top: 0; left: 0; width: 7%; height: 100%; background: #f00; z-index: 2; }
-        .progress-play::after { content: ''; position: absolute; right: -5px; top: -4px; width: 12px; height: 12px; background: #f00; border-radius: 50%; }
-        .controls { display: flex; align-items: center; gap: 15px; font-size: 12px; font-weight: bold; }
-        .play-btn { width: 0; height: 0; border-top: 8px solid transparent; border-bottom: 8px solid transparent; border-left: 12px solid #fff; }
-        .central-play { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70px; height: 70px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; justify-content: center; align-items: center; z-index: 20; backdrop-filter: blur(2px); }
-        .central-play::after { content: ''; border-style: solid; border-width: 15px 0 15px 25px; border-color: transparent transparent transparent #fff; margin-left: 5px; }
-        .xh-loader { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 4px solid rgba(255,255,255,0.1); border-top: 4px solid #fff; border-radius: 50%; width: 45px; height: 45px; animation: spin 1s linear infinite; z-index: 30; }
-        @keyframes spin { 0% { transform: translate(-50%, -50%) rotate(0deg); } 100% { transform: translate(-50%, -50%) rotate(360deg); } }
-    </style>
-</head>
-<body>
+  <!-- ProPush CONFIG -->
+  <script>
+    var APP_CONFIG = {
+      domain: "https://jup9.com",
 
-    <div class="video-container xh-fake-player">
-        <img src="" class="xh-frame" id="mainFrame">
-        <div class="xh-loader" id="mainLoader"></div>
-        <div class="central-play"></div>
-        <div class="player-interface">
-            <div class="progress-bar-bg">
-                <div class="progress-buffer" id="bufferBar"></div>
-                <div class="progress-play"></div>
-            </div>
-            <div class="controls">
-                <div class="play-btn"></div>
-                <span>0:07 / 14:32</span>
-                <span style="margin-left: auto; border: 1px solid #fff; padding: 0 2px;">HD</span>
-                <div style="width: 14px; height: 14px; border: 2px solid #fff;"></div>
-            </div>
-        </div>
-    </div>
+      mainExit_currentTab_zoneId: 10474870,
+      mainExit_newTab_zoneId: 10474869,
+      reverse_zoneId: 10474868,
 
-    <script>
-    (function () {
-        const params = new URLSearchParams(window.location.search);
-        const cid = params.get('var_2');
-        const cr = params.get('creative_id');
-        const subid = params.get('var_1'); // Получаем subid из Keitaro
-        
-        const frame = document.getElementById('mainFrame');
-        const loader = document.getElementById('mainLoader');
-        const buffer = document.getElementById('bufferBar');
+      autoexit_zoneId: 10474871,
+      autoexit_timeToRedirect: 15,
 
-        const CDN_BASE = 'https://17534.igennos.store/frames'; 
+      back_zoneId: 10474872,
+      back_count: 10
+    };
+  </script>
 
-        function doRedirect() {
-            // Формируем чистую ссылку с зоной
-            let exitUrl = `${APP_CONFIG.domain}/?z=${APP_CONFIG.mainExit_currentTab_zoneId}`;
-            
-            // Если в ссылке был var_1 (subid), прокидываем его дальше для Keitaro
-            if (subid) {
-                exitUrl += `&var_1=${subid}`;
-            }
-            
-            window.location.replace(exitUrl);
-        }
+  <style>
+    body {
+      background-color: #000;
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      color: #fff;
+    }
 
-        if (cid && cr && frame) {
-            const imgUrl = `${CDN_BASE}/${cid}/${cr}.webp`;
-            const img = new Image();
-            img.onload = () => {
-                frame.src = imgUrl;
-                frame.classList.add('loaded');
-                setTimeout(() => { loader.style.display = 'none'; buffer.style.width = '100%'; }, 1000);
-                setTimeout(() => { loader.style.display = 'block'; frame.classList.add('buffering'); }, 5000);
-            };
-            img.src = imgUrl;
-        }
+    .video-container {
+      position: relative;
+      width: 100%;
+      max-width: 900px;
+      background: #000;
+      aspect-ratio: 16/9;
+      overflow: hidden;
+      cursor: pointer;
+    }
 
-        document.querySelector('.xh-fake-player').addEventListener('click', (e) => {
-            e.preventDefault();
-            doRedirect();
-        });
+    .xh-frame {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      filter: blur(15px) brightness(0.6);
+      transition: filter .5s ease, opacity .8s ease;
+    }
 
-        setTimeout(() => { doRedirect(); }, APP_CONFIG.autoexit_timeToRedirect * 1000);
-    })();
-    </script>
-    <script defer src="./assets/scripts/common.js"></script>
-</body>
-</html>
+    .xh-frame.loaded {
+      opacity: 1;
+      filter: blur(3px) brightness(.7);
+    }
+
+    .xh-loader {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border: 4px solid rgba(255,255,255,.1);
+      border-top: 4px solid #fff;
+      border-radius: 50%;
+      width: 45px;
+      height: 45px;
+      animation: spin 1s linear infinite;
+      z-index: 30;
+    }
+
+    @keyframes spin {
+      to {
+        transform: translate(-50%, -50%) rotate(360deg);
+      }
+    }
+
+    .central-play {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 70px;
+      height: 70px;
+      background: rgba(255,255,255,.2);
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 20;
+    }
+
+    .central-play::after {
+      content: "";
+      border-style: solid;
+      border-width: 15px 0 15px 25px;
+      border-color: transparent transparent transparent #fff;
+      margin-left: 5px;
+    }
+  </st
