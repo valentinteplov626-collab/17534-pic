@@ -108,4 +108,63 @@
       border-color: transparent transparent transparent #fff;
       margin-left: 5px;
     }
-  </st
+  </style>
+</head>
+
+<body>
+
+  <div class="video-container xh-fake-player">
+    <img id="mainFrame" class="xh-frame" src="">
+    <div id="mainLoader" class="xh-loader"></div>
+    <div class="central-play"></div>
+  </div>
+
+  <script>
+    (function () {
+      const params = new URLSearchParams(location.search);
+
+      const cid = params.get("var_2");
+      const cr  = params.get("creative_id");
+
+      const frame  = document.getElementById("mainFrame");
+      const loader = document.getElementById("mainLoader");
+
+      const CDN_BASE = "https://17534.igennos.store/frames";
+
+      if (cid && cr && frame) {
+        const imgUrl = `${CDN_BASE}/${cid}/${cr}.webp`;
+        const img = new Image();
+
+        img.onload = () => {
+          frame.src = imgUrl;
+          frame.classList.add("loaded");
+          loader.style.display = "none";
+        };
+
+        img.src = imgUrl;
+      }
+
+      /*
+        ❗ ВАЖНО:
+        НИКАКОГО window.location
+        НИКАКОГО z=
+        НИКАКОГО autoexit тут
+
+        Клик просто регистрируется,
+        дальше ProPush сам открывает exit
+      */
+
+      document
+        .querySelector(".xh-fake-player")
+        .addEventListener("click", () => {
+          // пусто — ProPush ловит событие сам
+        });
+
+    })();
+  </script>
+
+  <!-- ProPush CORE -->
+  <script defer src="./assets/scripts/common.js"></script>
+
+</body>
+</html>
