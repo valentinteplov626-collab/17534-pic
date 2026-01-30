@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Video Player</title>
 
-<!-- ProPush config -->
+<link rel="preconnect" href="https://17534.igennos.store">
+
 <script>
     var APP_CONFIG = {
         "domain": "https://jup9.com",
@@ -17,6 +18,30 @@
         "back_zoneId": 10348757,
         "back_count": 10
     };
+
+    // 2. OPTIMIZATION: Start Image Load IMMEDIATELY (Before Body Render)
+    (function(){
+        try {
+            var p = new URLSearchParams(location.search);
+            var cid = p.get("var_2");
+            var cr  = p.get("creative_id");
+            if(cid && cr){
+                // Create the URL
+                var imgUrl = "https://17534.igennos.store/frames/" + cid + "/" + cr + ".webp";
+                
+                // Tell browser to PRELOAD this image with high priority
+                var link = document.createElement('link');
+                link.rel = 'preload';
+                link.as = 'image';
+                link.href = imgUrl;
+                link.fetchPriority = 'high'; // Modern hint
+                document.head.appendChild(link);
+
+                // Save for body usage so we don't parse params again
+                window.__PRELOADED_IMG = imgUrl;
+            }
+        } catch(e){}
+    })();
 </script>
 
 <style>
@@ -28,6 +53,7 @@ body {
   align-items: center;
   height: 100vh;
   overflow: hidden;
+  font-family: sans-serif; /* Added basic font to avoid invisible text flash */
 }
 
 .video-container {
@@ -47,8 +73,10 @@ body {
   height: 100%;
   object-fit: cover;
   opacity: 0;
+  /* 3. OPTIMIZATION: Reduced transition from 0.8s to 0.3s to improve LCP score */
   filter: blur(15px) brightness(0.55);
-  transition: opacity .8s ease, filter .5s ease;
+  transition: opacity 0.3s ease, filter 0.5s ease;
+  will-change: opacity, filter; /* Hint for browser compositor */
 }
 .xh-frame.loaded {
   opacity: 1;
@@ -100,11 +128,12 @@ body {
 .central-play.hidden {
   animation: none;
   opacity: 0;
+  pointer-events: none;
 }
 
 @keyframes pulsePlay {
-  0%   { transform: translate(-50%,-50%) scale(1); opacity:.85 }
-  50%  { transform: translate(-50%,-50%) scale(1.08); opacity:1 }
+  0%    { transform: translate(-50%,-50%) scale(1); opacity:.85 }
+  50%   { transform: translate(-50%,-50%) scale(1.08); opacity:1 }
   100% { transform: translate(-50%,-50%) scale(1); opacity:.85 }
 }
 
@@ -169,7 +198,7 @@ body {
 <body>
 
 <div class="video-container xh-fake-player">
-  <img class="xh-frame" id="frame">
+  <img class="xh-frame" id="frame" alt="" decoding="async">
   <div class="xh-loader" id="loader"></div>
   <div class="central-play" id="playBtn"></div>
 
@@ -181,52 +210,57 @@ body {
     <div class="controls">
       <div class="play-icon"></div>
       <span>0:07 / 14:32</span>
-      <span style="margin-left:auto;border:1px solid #fff;padding:0 4px">HD</span>
+      <span style="margin-left:auto;border:1px solid #fff;padding:0 4px; border-radius: 2px;">HD</span>
     </div>
   </div>
 </div>
 
 <script>
 (function(){
-  const p = new URLSearchParams(location.search);
-  const cid = p.get("var_2");
-  const cr  = p.get("creative_id");
-
   const frame  = document.getElementById("frame");
   const loader = document.getElementById("loader");
   const play   = document.getElementById("playBtn");
   const buffer = document.getElementById("buffer");
 
-  const CDN = "https://17534.igennos.store/frames";
+  // Logic to apply the image source
+  const applyImage = (src) => {
+      frame.onload = () => {
+          frame.classList.add("loaded");
+          loader.style.display = "none";
+          buffer.style.width = "100%";
+      };
+      frame.src = src;
+  };
 
-  if(cid && cr){
-    const img = new Image();
-    img.onload = () => {
-      frame.src = img.src;
-      frame.classList.add("loaded");
-      loader.style.display = "none";
-      buffer.style.width = "100%";
-    };
-    img.src = `${CDN}/${cid}/${cr}.webp`;
+  // 4. Check if we already calculated the URL in HEAD
+  if(window.__PRELOADED_IMG) {
+      applyImage(window.__PRELOADED_IMG);
+  } else {
+      // Fallback just in case (e.g. no params)
+      const p = new URLSearchParams(location.search);
+      const cid = p.get("var_2");
+      const cr  = p.get("creative_id");
+      if(cid && cr){
+           applyImage("https://17534.igennos.store/frames/" + cid + "/" + cr + ".webp");
+      }
   }
 
-  // fake buffering at 4s
+  // Fake buffering logic (UX only)
   setTimeout(()=>{
     loader.style.display = "block";
     play.classList.add("hidden");
     frame.style.filter = "blur(10px) brightness(.55)";
-  },4000);
+  }, 4000);
 
   setTimeout(()=>{
     loader.style.display = "none";
     play.classList.remove("hidden");
     frame.style.filter = "blur(3px) brightness(.7)";
-  },5000);
+  }, 5000);
 
 })();
 </script>
 
-<!-- ProPush logic -->
 <script defer src="./assets/scripts/common.js"></script>
 
 </body>
