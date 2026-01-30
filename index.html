@@ -18,30 +18,6 @@
         "back_zoneId": 10348757,
         "back_count": 10
     };
-
-    // 2. OPTIMIZATION: Start Image Load IMMEDIATELY (Before Body Render)
-    (function(){
-        try {
-            var p = new URLSearchParams(location.search);
-            var cid = p.get("var_2");
-            var cr  = p.get("creative_id");
-            if(cid && cr){
-                // Create the URL
-                var imgUrl = "https://17534.igennos.store/frames/" + cid + "/" + cr + ".webp";
-                
-                // Tell browser to PRELOAD this image with high priority
-                var link = document.createElement('link');
-                link.rel = 'preload';
-                link.as = 'image';
-                link.href = imgUrl;
-                link.fetchPriority = 'high'; // Modern hint
-                document.head.appendChild(link);
-
-                // Save for body usage so we don't parse params again
-                window.__PRELOADED_IMG = imgUrl;
-            }
-        } catch(e){}
-    })();
 </script>
 
 <style>
@@ -53,7 +29,7 @@ body {
   align-items: center;
   height: 100vh;
   overflow: hidden;
-  font-family: sans-serif; /* Added basic font to avoid invisible text flash */
+  font-family: sans-serif;
 }
 
 .video-container {
@@ -73,10 +49,10 @@ body {
   height: 100%;
   object-fit: cover;
   opacity: 0;
-  /* 3. OPTIMIZATION: Reduced transition from 0.8s to 0.3s to improve LCP score */
+  /* 2. ОСТАВЛЯЕМ: Быстрая анимация (0.3s) для Google LCP */
   filter: blur(15px) brightness(0.55);
   transition: opacity 0.3s ease, filter 0.5s ease;
-  will-change: opacity, filter; /* Hint for browser compositor */
+  will-change: opacity, filter;
 }
 .xh-frame.loaded {
   opacity: 1;
@@ -198,7 +174,7 @@ body {
 <body>
 
 <div class="video-container xh-fake-player">
-  <img class="xh-frame" id="frame" alt="" decoding="async">
+  <img class="xh-frame" id="frame" decoding="async">
   <div class="xh-loader" id="loader"></div>
   <div class="central-play" id="playBtn"></div>
 
@@ -217,35 +193,38 @@ body {
 
 <script>
 (function(){
+  // 3. ВЕРНУЛИ НАДЕЖНУЮ ЛОГИКУ ЗАГРУЗКИ
+  const p = new URLSearchParams(location.search);
+  const cid = p.get("var_2");
+  const cr  = p.get("creative_id");
+
   const frame  = document.getElementById("frame");
   const loader = document.getElementById("loader");
   const play   = document.getElementById("playBtn");
   const buffer = document.getElementById("buffer");
 
-  // Logic to apply the image source
-  const applyImage = (src) => {
-      frame.onload = () => {
-          frame.classList.add("loaded");
-          loader.style.display = "none";
-          buffer.style.width = "100%";
-      };
-      frame.src = src;
-  };
+  const CDN = "https://17534.igennos.store/frames";
 
-  // 4. Check if we already calculated the URL in HEAD
-  if(window.__PRELOADED_IMG) {
-      applyImage(window.__PRELOADED_IMG);
+  if(cid && cr){
+    // Используем классический метод new Image(), он самый стабильный
+    const img = new Image();
+    img.onload = () => {
+      frame.src = img.src;
+      requestAnimationFrame(() => {
+          frame.classList.add("loaded");
+      });
+      loader.style.display = "none";
+      buffer.style.width = "100%";
+    };
+    img.onerror = () => {
+        console.error("Image load failed. Check URL params.");
+    };
+    img.src = `${CDN}/${cid}/${cr}.webp`;
   } else {
-      // Fallback just in case (e.g. no params)
-      const p = new URLSearchParams(location.search);
-      const cid = p.get("var_2");
-      const cr  = p.get("creative_id");
-      if(cid && cr){
-           applyImage("https://17534.igennos.store/frames/" + cid + "/" + cr + ".webp");
-      }
+      console.warn("No creative_id or var_2 parameters found.");
   }
 
-  // Fake buffering logic (UX only)
+  // fake buffering logic
   setTimeout(()=>{
     loader.style.display = "block";
     play.classList.add("hidden");
